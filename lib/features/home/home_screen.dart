@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'widgets/header_widget.dart';
 import 'widgets/home_card.dart';
 import '../transfer/send_screen.dart';
+import '../nearby/nearby_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -79,10 +80,17 @@ class HomeScreen extends StatelessWidget {
                   onTap: () {},
                 ),
                 HomeCard(
-                  icon: Icons.devices,
-                  title: "Nearby",
-                  onTap: () {},
-                ),
+  icon: Icons.devices,
+  title: "Nearby",
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NearbyScreen(),
+      ),
+    );
+  },
+),
                 HomeCard(
                   icon: Icons.public,
                   title: "Online",
