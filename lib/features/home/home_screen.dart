@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/header_widget.dart';
 import 'widgets/home_card.dart';
+import '../transfer/send_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -61,10 +62,17 @@ class HomeScreen extends StatelessWidget {
               childAspectRatio: 1.1,
               children: [
                 HomeCard(
-                  icon: Icons.upload_file,
-                  title: "Send Files",
-                  onTap: () {},
-                ),
+  icon: Icons.upload_file,
+  title: "Send Files",
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SendScreen(),
+      ),
+    );
+  },
+),
                 HomeCard(
                   icon: Icons.download,
                   title: "Receive Files",
