@@ -71,12 +71,35 @@ class _SendScreenState extends State<SendScreen> {
                           formatBytes(selectedFile!.size),
                           style: const TextStyle(fontSize: 16),
                         ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: pickFile,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text("Choose Another File"),
-                        ),
+                        Column(
+                            children: [
+                                ElevatedButton.icon(
+                                onPressed: pickFile,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text("Choose Another File"),
+                                ),
+
+                                const SizedBox(height: 15),
+
+                                SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.send),
+                                    label: const Text("Send File"),
+                                    style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                        content: Text("Searching for nearby devices..."),
+                                        ),
+                                    );
+                                    },
+                                ),
+                                ),
+                            ],
+                            )
                       ],
                     ),
                   ),
