@@ -1,23 +1,49 @@
-import 'dart:async';
+import '../models/device.dart';
 
 class DiscoveryService {
-  final StreamController<List<String>> _devicesController =
-      StreamController.broadcast();
+  final List<Device> _devices = [];
 
-  Stream<List<String>> get devicesStream => _devicesController.stream;
+  List<Device> get devices => List.unmodifiable(_devices);
 
-  bool _isSearching = false;
-
-  bool get isSearching => _isSearching;
-
-  Future<void> startDiscovery() async {
-    _isSearching = true;
-
-    // Networking code will be added here.
+  void addDevice(Device device) {
+    if (!_devices.any((d) => d.ip == device.ip)) {
+      _devices.add(device);
+    }
   }
 
-  void stopDiscovery() {
-    _isSearching = false;
-    _devicesController.close();
+  void removeDevice(Device device) {
+    _devices.removeWhere((d) => d.ip == device.ip);
+  }
+
+  void clearDevices() {
+    _devices.clear();
+  }
+
+  void loadSampleDevices() {
+    clearDevices();
+
+    addDevice(
+      const Device(
+        name: "Abdul-PC",
+        ip: "192.168.1.10",
+        port: 8888,
+      ),
+    );
+
+    addDevice(
+      const Device(
+        name: "Office Laptop",
+        ip: "192.168.1.20",
+        port: 8888,
+      ),
+    );
+
+    addDevice(
+      const Device(
+        name: "Galaxy Phone",
+        ip: "192.168.1.30",
+        port: 8888,
+      ),
+    );
   }
 }
