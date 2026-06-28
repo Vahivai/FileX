@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-class DiscoveryBroadcaster {
-  static const int discoveryPort = 8888;
+import '../utils/constants.dart';
 
+class DiscoveryBroadcaster {
   Future<void> broadcast() async {
     final socket = await RawDatagramSocket.bind(
       InternetAddress.anyIPv4,
@@ -12,12 +12,10 @@ class DiscoveryBroadcaster {
 
     socket.broadcastEnabled = true;
 
-    const message = "FILEX_DISCOVERY";
-
     socket.send(
-      utf8.encode(message),
+      utf8.encode(TransferConstants.discoveryMessage),
       InternetAddress("255.255.255.255"),
-      discoveryPort,
+      TransferConstants.discoveryPort,
     );
 
     print("📡 Discovery broadcast sent");

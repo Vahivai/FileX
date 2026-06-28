@@ -1,15 +1,21 @@
 import 'dart:io';
 
+import '../utils/constants.dart';
+
 class DiscoveryListener {
+  final void Function(String message, InternetAddress address)? onMessage;
+
+  DiscoveryListener({this.onMessage});
+
   RawDatagramSocket? _socket;
 
   Future<void> startListening() async {
     _socket = await RawDatagramSocket.bind(
       InternetAddress.anyIPv4,
-      8888,
+      TransferConstants.discoveryPort,
     );
 
-    print("🎧 Listening on port 8888");
+    print("🎧 Listening on port ${TransferConstants.discoveryPort}");
 
     _socket!.listen((event) {
       if (event == RawSocketEvent.read) {
@@ -19,6 +25,11 @@ class DiscoveryListener {
           final message = String.fromCharCodes(datagram.data);
 
           print("Received: $message");
+
+          onMessage?.call(
+            message,
+            datagram.address,
+          );
         }
       }
     });

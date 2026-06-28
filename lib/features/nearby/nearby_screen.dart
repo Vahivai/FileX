@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../services/transfer/discovery/discovery_service.dart';
+import '../../services/transfer/models/device.dart';
 
 class NearbyScreen extends StatefulWidget {
   const NearbyScreen({super.key});
@@ -16,43 +18,38 @@ class _NearbyScreenState extends State<NearbyScreen> {
   @override
   void initState() {
     super.initState();
+    _startDiscovery();
+  }
 
-    discoveryService.loadSampleDevices();
+  Future<void> _startDiscovery() async {
+    setState(() {
+      isSearching = true;
+    });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
+    await discoveryService.startDiscovery();
 
-      setState(() {
-        isSearching = false;
-      });
+    if (!mounted) return;
+
+    setState(() {
+      isSearching = false;
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final devices = discoveryService.devices;
+  void dispose() {
+    discoveryService.stopDiscovery();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Nearby Devices"),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                isSearching = true;
-              });
-
-              Future.delayed(const Duration(seconds: 2), () {
-                if (!mounted) return;
-
-                discoveryService.loadSampleDevices();
-
-                setState(() {
-                  isSearching = false;
-                });
-              });
-            },
+            onPressed: _startDiscovery,
           ),
         ],
       ),
@@ -70,40 +67,56 @@ class _NearbyScreenState extends State<NearbyScreen> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: devices.length,
-              itemBuilder: (context, index) {
-                final device = devices[index];
+          : ValueListenableBuilder<List<Device>>(
+              valueListenable: discoveryService.devicesNotifier,
+              builder: (context, devices, child) {
+                if (devices.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No nearby devices found",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  );
+                }
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.computer,
-                      color: Colors.blue,
-                      size: 32,
-                    ),
-                    title: Text(
-                      device.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text("${device.ip}:${device.port}"),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Connecting to ${device.name}...",
-                            ),
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: devices.length,
+                  itemBuilder: (context, index) {
+                    final device = devices[index];
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.computer,
+                          color: Colors.blue,
+                          size: 32,
+                        ),
+                        title: Text(
+                          device.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
-                      child: const Text("Connect"),
-                    ),
-                  ),
+                        ),
+                        subtitle: Text(
+                          "${device.ip}:${device.port}",
+                        ),
+                        trailing: ElevatedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Connecting to ${device.name}...",
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text("Connect"),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),

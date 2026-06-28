@@ -1,22 +1,64 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+
 import '../models/device.dart';
+import 'broadcaster.dart';
+import 'listener.dart';
 
 class DiscoveryService {
-  final List<Device> _devices = [];
+  final ValueNotifier<List<Device>> devicesNotifier =
+      ValueNotifier<List<Device>>([]);
 
-  List<Device> get devices => List.unmodifiable(_devices);
+  bool _isSearching = false;
+
+  final DiscoveryBroadcaster _broadcaster = DiscoveryBroadcaster();
+
+  late final DiscoveryListener _listener;
+
+  bool get isSearching => _isSearching;
+
+  List<Device> get devices => devicesNotifier.value;
+
+  Future<void> startDiscovery() async {
+  _isSearching = true;
+
+  clearDevices();
+
+  _listener = DiscoveryListener(
+    onMessage: (message, InternetAddress address) {
+      addDevice(
+        Device(
+          name: address.address,
+          ip: address.address,
+          port: 8888,
+        ),
+      );
+    },
+  );
+
+  await _listener.startListening();
+
+  await _broadcaster.broadcast();
+}
+
+  void stopDiscovery() {
+  _listener.stop();
+
+  _isSearching = false;
+}
 
   void addDevice(Device device) {
-    if (!_devices.any((d) => d.ip == device.ip)) {
-      _devices.add(device);
+    final devices = List<Device>.from(devicesNotifier.value);
+
+    if (!devices.any((d) => d.ip == device.ip)) {
+      devices.add(device);
+      devicesNotifier.value = devices;
     }
   }
 
-  void removeDevice(Device device) {
-    _devices.removeWhere((d) => d.ip == device.ip);
-  }
-
   void clearDevices() {
-    _devices.clear();
+    devicesNotifier.value = [];
   }
 
   void loadSampleDevices() {
@@ -45,5 +87,7 @@ class DiscoveryService {
         port: 8888,
       ),
     );
+
+    _isSearching = false;
   }
 }
