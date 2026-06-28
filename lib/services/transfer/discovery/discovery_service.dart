@@ -39,7 +39,7 @@ class DiscoveryService {
 
   await _listener.startListening();
 
-  await _broadcaster.broadcast();
+  await _broadcaster.broadcast(Platform.localHostname);
 }
 
   void stopDiscovery() {

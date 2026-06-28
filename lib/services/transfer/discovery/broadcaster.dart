@@ -4,7 +4,7 @@ import 'dart:io';
 import '../utils/constants.dart';
 
 class DiscoveryBroadcaster {
-  Future<void> broadcast() async {
+  Future<void> broadcast(String deviceName) async {
     final socket = await RawDatagramSocket.bind(
       InternetAddress.anyIPv4,
       0,
@@ -12,13 +12,16 @@ class DiscoveryBroadcaster {
 
     socket.broadcastEnabled = true;
 
+    final message =
+        "${TransferConstants.discoveryPrefix}|$deviceName";
+
     socket.send(
-      utf8.encode(TransferConstants.discoveryPrefix),
+      utf8.encode(message),
       InternetAddress("255.255.255.255"),
       TransferConstants.discoveryPort,
     );
 
-    print("📡 Discovery broadcast sent");
+    print("📡 Sent: $message");
 
     socket.close();
   }

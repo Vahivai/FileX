@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import '../utils/constants.dart';
@@ -17,20 +18,29 @@ class DiscoveryListener {
 
     print("🎧 Listening on port ${TransferConstants.discoveryPort}");
 
-    _socket!.listen((event) {
-      if (event == RawSocketEvent.read) {
-        final datagram = _socket!.receive();
+    _socket!.listen((event) async {
+      if (event != RawSocketEvent.read) return;
 
-        if (datagram != null) {
-          final message = String.fromCharCodes(datagram.data);
+      final datagram = _socket!.receive();
 
-          print("Received: $message");
+      if (datagram == null) return;
 
-          onMessage?.call(
-            message,
-            datagram.address,
-          );
-        }
+      final message = utf8.decode(datagram.data);
+
+      print("Received: $message");
+
+      onMessage?.call(message, datagram.address);
+
+      // Someone is searching for devices
+      if (message.startsWith(TransferConstants.discoveryPrefix)) {
+        final response =
+            "${TransferConstants.responsePrefix}|${Platform.localHostname}";
+
+        _socket!.send(
+          utf8.encode(response),
+          datagram.address,
+          TransferConstants.discoveryPort,
+        );
       }
     });
   }
