@@ -13,7 +13,7 @@ class DiscoveryBroadcaster {
     socket.broadcastEnabled = true;
 
     socket.send(
-      utf8.encode(TransferConstants.discoveryMessage),
+      utf8.encode(TransferConstants.discoveryPrefix),
       InternetAddress("255.255.255.255"),
       TransferConstants.discoveryPort,
     );
