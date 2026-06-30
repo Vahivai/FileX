@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-
 import '../utils/constants.dart';
+import '../models/discovery_message.dart';
 
 class DiscoveryListener {
-  final void Function(String message, InternetAddress address)? onMessage;
+  final void Function(
+  DiscoveryMessage message,
+  InternetAddress address,
+  )? onMessage;
 
   DiscoveryListener({this.onMessage});
 
@@ -25,16 +28,26 @@ class DiscoveryListener {
 
       if (datagram == null) return;
 
-      final message = utf8.decode(datagram.data);
+      if (datagram.address.address == InternetAddress.loopbackIPv4.address) {
+        return;
+      }
 
-      print("Received: $message");
+      final rawMessage = utf8.decode(datagram.data);
+
+      print("Received: $rawMessage");
+
+      final message = DiscoveryMessage.fromString(rawMessage);
 
       onMessage?.call(message, datagram.address);
 
       // Someone is searching for devices
-      if (message.startsWith(TransferConstants.discoveryPrefix)) {
+      if (message.type == TransferConstants.discoveryPrefix) {
+        String deviceName = Platform.isAndroid
+            ? "V2246"
+            : Platform.localHostname;
+
         final response =
-            "${TransferConstants.responsePrefix}|${Platform.localHostname}";
+            "${TransferConstants.responsePrefix}|$deviceName";
 
         _socket!.send(
           utf8.encode(response),

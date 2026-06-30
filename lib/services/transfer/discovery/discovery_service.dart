@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../models/device.dart';
+import '../utils/constants.dart';
 import 'broadcaster.dart';
 import 'listener.dart';
 
@@ -10,84 +11,73 @@ class DiscoveryService {
   final ValueNotifier<List<Device>> devicesNotifier =
       ValueNotifier<List<Device>>([]);
 
-  bool _isSearching = false;
-
   final DiscoveryBroadcaster _broadcaster = DiscoveryBroadcaster();
 
   late final DiscoveryListener _listener;
+
+  bool _isSearching = false;
 
   bool get isSearching => _isSearching;
 
   List<Device> get devices => devicesNotifier.value;
 
   Future<void> startDiscovery() async {
-  _isSearching = true;
+    _isSearching = true;
 
-  clearDevices();
+    clearDevices();
 
-  _listener = DiscoveryListener(
-    onMessage: (message, InternetAddress address) {
-      addDevice(
-        Device(
-          name: address.address,
-          ip: address.address,
-          port: 8888,
-        ),
-      );
-    },
-  );
+    // Temporary device name
+    final String deviceName = Platform.isWindows
+        ? Platform.localHostname
+        : "V2246";
 
-  await _listener.startListening();
+    _listener = DiscoveryListener(
+      onMessage: (message, InternetAddress address) {
+        // Ignore loopback packets
+        if (address.address == InternetAddress.loopbackIPv4.address) {
+          return;
+        }
 
-  await _broadcaster.broadcast(Platform.localHostname);
-}
+        // Ignore our own response
+        if (message.deviceName == deviceName) {
+          return;
+        }
+
+        // Only add response packets
+        if (message.type == TransferConstants.responsePrefix) {
+          addDevice(
+            Device(
+              name: message.deviceName,
+              ip: address.address,
+              port: TransferConstants.discoveryPort,
+            ),
+          );
+        }
+      },
+    );
+
+    await _listener.startListening();
+
+    await _broadcaster.broadcast(deviceName);
+
+    _isSearching = false;
+  }
 
   void stopDiscovery() {
-  _listener.stop();
-
-  _isSearching = false;
-}
+    _listener.stop();
+    _isSearching = false;
+  }
 
   void addDevice(Device device) {
-    final devices = List<Device>.from(devicesNotifier.value);
+    final updatedDevices = List<Device>.from(devicesNotifier.value);
 
-    if (!devices.any((d) => d.ip == device.ip)) {
-      devices.add(device);
-      devicesNotifier.value = devices;
+    if (!updatedDevices.any((d) => d.ip == device.ip)) {
+      updatedDevices.add(device);
+      devicesNotifier.value = updatedDevices;
     }
   }
 
   void clearDevices() {
     devicesNotifier.value = [];
-  }
-
-  void loadSampleDevices() {
-    clearDevices();
-
-    addDevice(
-      const Device(
-        name: "Abdul-PC",
-        ip: "192.168.1.10",
-        port: 8888,
-      ),
-    );
-
-    addDevice(
-      const Device(
-        name: "Office Laptop",
-        ip: "192.168.1.20",
-        port: 8888,
-      ),
-    );
-
-    addDevice(
-      const Device(
-        name: "Galaxy Phone",
-        ip: "192.168.1.30",
-        port: 8888,
-      ),
-    );
-
-    _isSearching = false;
   }
 }
